@@ -38,24 +38,57 @@
                 </div>
             {% endif %}
 
-            {% if not has_bank_details %}
-                <div class="bank-warning">
-                    <i class="fas fa-university"></i>
-                    <p>Adicione suas coordenadas bancárias no Perfil antes de sacar.</p>
-                </div>
-            {% endif %}
-
             <form method="post" id="form-saque" class="saque-form">
                 {% csrf_token %}
                 
+                <div class="method-section">
+                    <label class="section-label">Forma de Levantamento</label>
+                    <div class="method-grid">
+                        <label class="method-option">
+                            <input type="radio" name="withdrawal_method" value="BANCO" required onclick="toggleFields('banco')">
+                            <div class="method-box">
+                                <i class="fas fa-university"></i>
+                                <span>BANCO</span>
+                            </div>
+                        </label>
+                        <label class="method-option">
+                            <input type="radio" name="withdrawal_method" value="PIX" onclick="toggleFields('pix')">
+                            <div class="method-box">
+                                <i class="fas fa-bolt"></i>
+                                <span>PIX</span>
+                            </div>
+                        </label>
+                        <label class="method-option">
+                            <input type="radio" name="withdrawal_method" value="USDT" onclick="toggleFields('usdt')">
+                            <div class="method-box">
+                                <i class="fas fa-coins"></i>
+                                <span>USDT</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="fields-container" class="fields-card" style="display: none;">
+                    <div id="field-banco" class="method-fields" style="display: none;">
+                        <input type="text" name="bank_name" placeholder="Nome do Banco" class="premium-input">
+                        <input type="text" name="iban" placeholder="IBAN (AO06...)" class="premium-input">
+                        <input type="text" name="account_holder" placeholder="Titular da Conta" class="premium-input">
+                    </div>
+
+                    <div id="field-pix" class="method-fields" style="display: none;">
+                        <input type="text" name="pix_key" placeholder="Chave PIX (CPF, E-mail, Celular)" class="premium-input">
+                    </div>
+
+                    <div id="field-usdt" class="method-fields" style="display: none;">
+                        <input type="text" name="usdt_address" placeholder="Endereço Carteira (Rede TRC20)" class="premium-input">
+                    </div>
+                </div>
+
                 <div class="amount-display-box">
                     <label>Valor Selecionado</label>
                     <div class="input-wrapper-premium">
                         <span class="currency-prefix">KZ</span>
-                        <input type="number" name="amount" id="id_amount" 
-                               value="{{ form.amount.value|default:'' }}" 
-                               readonly required 
-                               placeholder="0">
+                        <input type="number" name="amount" id="id_amount" readonly required placeholder="0">
                     </div>
                 </div>
 
@@ -64,13 +97,13 @@
                     <button type="button" class="pill-btn" onclick="setAmount(8000)">8000</button>
                     <button type="button" class="pill-btn" onclick="setAmount(15000)">15000</button>
                     <button type="button" class="pill-btn" onclick="setAmount(50000)">50.000</button>
-                    <button type="button" class="pill-btn" onclick="setAmount(100000)">100000</button>
-                    <button type="button" class="pill-btn" onclick="setAmount(180000)">180000</button>
-                    <button type="button" class="pill-btn" onclick="setAmount(280000)">280000</button>
-                    <button type="button" class="pill-btn" onclick="setAmount(500000)">500000</button>
+                    <button type="button" class="pill-btn" onclick="setAmount(100000)">100.000</button>
+                    <button type="button" class="pill-btn" onclick="setAmount(180000)">180.000</button>
+                    <button type="button" class="pill-btn" onclick="setAmount(280000)">280.000</button>
+                    <button type="button" class="pill-btn" onclick="setAmount(500000)">500.000</button>
                 </div>
 
-                <button type="submit" class="btn-confirm-premium" {% if not has_bank_details %}disabled{% endif %}>
+                <button type="submit" class="btn-confirm-premium">
                     EFETUAR LEVANTAMENTO
                 </button>
             </form>
@@ -79,153 +112,91 @@
 </div>
 
 <style>
-    /* Reset e Estabilidade Total */
-    * {
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-    }
+    /* Estilos de Estrutura e Reset */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; padding: 0; overflow-x: hidden; background: #fff; }
+    .saque-page-white { background-color: #ffffff; min-height: 100vh; width: 100%; display: flex; justify-content: center; font-family: 'Segoe UI', sans-serif; }
+    .saque-wrapper { width: 100%; max-width: 400px; padding: 20px; display: flex; flex-direction: column; }
 
-    body {
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-    }
-
-    .saque-page-white {
-        background-color: #ffffff;
-        min-height: 100vh;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        font-family: 'Segoe UI', Roboto, sans-serif;
-    }
-
-    .saque-wrapper {
-        width: 100%;
-        max-width: 400px;
-        background: #ffffff;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .top-header-clean {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 20px;
-    }
-
-    .btn-back-dark { color: #1a1a1a; font-size: 1.3rem; text-decoration: none; }
+    /* Header */
+    .top-header-clean { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .btn-back-dark { color: #1a1a1a; font-size: 1.3rem; }
     .header-title-clean { font-size: 1.25rem; font-weight: 700; color: #1a1a1a; margin: 0; }
 
-    /* Cartão Multicaixa Estilizado */
+    /* Cartão Multicaixa */
     .multicaixa-card {
         background: linear-gradient(135deg, #004488 0%, #0066cc 100%);
-        width: 100%;
-        aspect-ratio: 1.6 / 1;
-        border-radius: 16px;
-        padding: 20px;
-        color: white;
-        position: relative;
-        box-shadow: 0 8px 20px rgba(0, 70, 140, 0.2);
-        margin-bottom: 25px;
+        width: 100%; aspect-ratio: 1.6 / 1; border-radius: 16px; padding: 20px;
+        color: white; position: relative; box-shadow: 0 8px 20px rgba(0, 70, 140, 0.2); margin-bottom: 25px;
     }
-
     .mc-chip { width: 40px; height: 30px; background: linear-gradient(135deg, #f1c40f 0%, #d4ac0d 100%); border-radius: 4px; }
     .mc-brand { position: absolute; top: 20px; right: 20px; font-weight: 800; font-size: 0.9rem; }
-    .mc-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.85; margin-top: 15px; }
-    .mc-balance { font-size: 1.8rem; font-weight: 700; }
-    .mc-footer { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; font-size: 0.75rem; }
+    .mc-balance { font-size: 1.8rem; font-weight: 700; margin-top: 10px; }
+    .mc-footer { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.9; }
 
-    /* Input Exclusivo para Leitura */
-    .amount-display-box { text-align: center; margin-bottom: 25px; }
-    .amount-display-box label { color: #666; font-size: 0.85rem; margin-bottom: 8px; display: block; }
-
-    .input-wrapper-premium {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-bottom: 2px solid #0066cc;
-        padding: 5px 0;
-        max-width: 220px;
-        margin: 0 auto;
+    /* Métodos de Pagamento */
+    .section-label { font-size: 0.85rem; font-weight: 700; color: #666; display: block; margin-bottom: 12px; text-align: center; }
+    .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .method-option { cursor: pointer; }
+    .method-option input { display: none; }
+    .method-box {
+        background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; padding: 12px 5px;
+        display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.3s;
     }
+    .method-box i { font-size: 1.2rem; color: #444; }
+    .method-box span { font-size: 0.7rem; font-weight: 700; }
+    .method-option input:checked + .method-box { background: #eef6ff; border-color: #0066cc; transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,102,204,0.1); }
+    .method-option input:checked + .method-box i { color: #0066cc; }
 
-    .currency-prefix { font-size: 1.1rem; font-weight: 800; color: #0066cc; margin-right: 8px; }
-
-    .input-wrapper-premium input {
-        border: none !important;
-        background: transparent !important;
-        font-size: 1.8rem !important;
-        font-weight: 700 !important;
-        color: #1a1a1a !important;
-        width: 100%;
-        outline: none;
-        text-align: left;
-        cursor: default; /* Mostra que não é editável */
+    /* Campos Dinâmicos */
+    .fields-card { background: #fdfdfd; border: 1px dashed #ccd6e0; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+    .premium-input {
+        width: 100%; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
+        padding: 12px; font-size: 0.9rem; margin-bottom: 10px; outline: none; transition: 0.3s;
     }
+    .premium-input:focus { border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.05); }
 
-    /* Grid de Botões */
-    .quick-values-pill-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        margin-bottom: 25px;
-    }
+    /* Valores e Botões */
+    .amount-display-box { text-align: center; margin-bottom: 20px; }
+    .input-wrapper-premium { display: flex; align-items: center; justify-content: center; border-bottom: 2px solid #0066cc; max-width: 180px; margin: 0 auto; }
+    .currency-prefix { font-size: 1.1rem; font-weight: 800; color: #0066cc; margin-right: 5px; }
+    .input-wrapper-premium input { border: none; background: transparent; font-size: 1.8rem; font-weight: 700; color: #1a1a1a; width: 100%; outline: none; text-align: center; }
 
-    .pill-btn {
-        background: #f2f4f7;
-        border: 1px solid #eef0f2;
-        padding: 10px 2px;
-        border-radius: 10px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #444;
-        transition: all 0.2s;
-        cursor: pointer;
-    }
-
-    .pill-btn:active { background: #0066cc; color: white; transform: scale(0.95); }
+    .quick-values-pill-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 25px; }
+    .pill-btn { background: #f2f4f7; border: 1px solid #eef0f2; padding: 10px 2px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .pill-btn:active { background: #0066cc; color: white; }
 
     .btn-confirm-premium {
-        width: 100%;
-        background: #0066cc;
-        color: white;
-        border: none;
-        padding: 16px;
-        border-radius: 12px;
-        font-size: 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
+        width: 100%; background: #0066cc; color: white; border: none; padding: 16px;
+        border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; box-shadow: 0 6px 15px rgba(0,102,204,0.2);
     }
-
-    .btn-confirm-premium:disabled { background: #cbd5e0; cursor: not-allowed; }
-
-    /* Alertas */
-    .bank-warning { background: #fff8e1; border: 1px solid #ffecb3; color: #856404; padding: 12px; border-radius: 10px; font-size: 0.8rem; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
     .msg-alert { padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; font-size: 0.85rem; }
     .msg-alert.success { background: #e8f5e9; color: #2e7d32; }
-    .msg-alert.error { background: #ffebee; color: #c62828; }
-
-    @media (max-width: 350px) {
-        .quick-values-pill-grid { grid-template-columns: repeat(3, 1fr); }
-    }
 </style>
 
 <script>
+    function toggleFields(method) {
+        document.getElementById('fields-container').style.display = 'block';
+        // Esconder todos os grupos primeiro
+        document.querySelectorAll('.method-fields').forEach(el => {
+            el.style.display = 'none';
+            // Remover 'required' dos inputs escondidos para não travar o envio
+            el.querySelectorAll('input').forEach(input => input.required = false);
+        });
+
+        // Mostrar o selecionado e adicionar 'required'
+        const activeGroup = document.getElementById('field-' + method);
+        activeGroup.style.display = 'block';
+        activeGroup.querySelectorAll('input').forEach(input => input.required = true);
+    }
+
     function setAmount(val) {
-        // Seleciona o input pelo ID
         const input = document.getElementById('id_amount');
         if (input) {
             input.value = val;
-            
-            // Efeito visual de confirmação na borda
             const wrapper = document.querySelector('.input-wrapper-premium');
             wrapper.style.borderBottomColor = '#27ae60';
-            setTimeout(() => {
-                wrapper.style.borderBottomColor = '#0066cc';
-            }, 400);
+            setTimeout(() => { wrapper.style.borderBottomColor = '#0066cc'; }, 400);
         }
     }
 </script>

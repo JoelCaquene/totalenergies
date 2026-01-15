@@ -114,15 +114,27 @@ class Withdrawal(models.Model):
         ('Aprovado', 'Aprovado'),
         ('Recusado', 'Recusado'),
     ]
+    
+    # Adicionado suporte a múltiplos métodos no saque
+    WITHDRAWAL_METHODS = [
+        ('bank', 'Banco (IBAN)'),
+        ('pix', 'PIX'),
+        ('usdt', 'USDT (TRC20)'),
+    ]
 
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name="Usuário")
     amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Valor")
+    method = models.CharField(max_length=10, choices=WITHDRAWAL_METHODS, default='bank', verbose_name="Método Escolhido")
+    withdrawal_details = models.TextField(blank=True, null=True, verbose_name="Dados do Recebimento", help_text="Ex: IBAN ou Chave PIX usada no momento do saque")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pendente', verbose_name="Status")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data de Solicitação")
 
     class Meta:
         verbose_name = "Saque"
         verbose_name_plural = "Saques"
+
+    def __str__(self):
+        return f"{self.user.phone_number} - {self.amount} ({self.status})"
 
 # --- NÍVEIS E TAREFAS ---
 

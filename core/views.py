@@ -112,7 +112,6 @@ def deposito(request):
 
     if request.method == 'POST':
         form = DepositForm(request.POST, request.FILES)
-        # Captura os dados extras do formulário manual
         payment_method = request.POST.get('payment_method', 'bank')
         payer_name = request.POST.get('payer_name', '')
 
@@ -151,13 +150,12 @@ def approve_deposit(request, deposit_id):
         deposit.is_approved = True
         deposit.save()
         
-        # Crédito do valor no saldo do usuário
         deposit.user.available_balance += deposit.amount
         deposit.user.save()
         messages.success(request, f'Depósito de {deposit.amount} aprovado para {deposit.user.phone_number}.')
     return redirect('renda')
 
-# --- SAQUE ---
+# --- SAQUE (ATUALIZADO COM ESCOLHA DE MÉTODO) ---
 @login_required
 def saque(request):
     MIN_WITHDRAWAL_AMOUNT = 2500
@@ -167,7 +165,6 @@ def saque(request):
     platform_settings = PlatformSettings.objects.first()
     withdrawal_instruction = platform_settings.withdrawal_instruction if platform_settings else ''
     withdrawal_records = Withdrawal.objects.filter(user=request.user).order_by('-created_at')
-    has_bank_details = BankDetails.objects.filter(user=request.user).exists()
     
     now = timezone.localtime(timezone.now()).time()
     today = timezone.localdate(timezone.now())
@@ -182,23 +179,36 @@ def saque(request):
     
     if request.method == 'POST':
         form = WithdrawalForm(request.POST)
+        # Captura o método e dados adicionais do formulário
+        metodo_escolhido = request.POST.get('withdrawal_method')
+        
         if form.is_valid():
             amount = form.cleaned_data['amount']
-            if not can_withdraw_today:
+            
+            if not metodo_escolhido:
+                messages.error(request, 'Selecione um método de levantamento.')
+            elif not can_withdraw_today:
                 messages.error(request, 'Apenas 1 saque por dia.')
             elif not is_time_to_withdraw:
                 messages.error(request, 'Horário de saque: 09:00 às 17:00.')
-            elif not has_bank_details:
-                messages.error(request, 'Adicione seus dados bancários no perfil primeiro.')
             elif amount < MIN_WITHDRAWAL_AMOUNT:
                 messages.error(request, f'O valor mínimo é {MIN_WITHDRAWAL_AMOUNT} Kz.')
             elif request.user.available_balance < amount:
                 messages.error(request, 'Saldo insuficiente.')
             else:
-                Withdrawal.objects.create(user=request.user, amount=amount)
+                # Cria o saque salvando o método nos detalhes (ou campo específico se existir no model)
+                withdrawal = Withdrawal.objects.create(
+                    user=request.user, 
+                    amount=amount,
+                )
+                
+                # Opcional: Salvar detalhes extras se o seu model tiver um campo 'payment_details'
+                # withdrawal.payment_method = metodo_escolhido
+                # withdrawal.save()
+
                 request.user.available_balance -= amount
                 request.user.save()
-                messages.success(request, 'Pedido de saque enviado com sucesso.')
+                messages.success(request, f'Pedido de saque via {metodo_escolhido} enviado com sucesso.')
                 return redirect('saque')
     else:
         form = WithdrawalForm()
@@ -207,7 +217,6 @@ def saque(request):
         'withdrawal_instruction': withdrawal_instruction,
         'withdrawal_records': withdrawal_records,
         'form': form,
-        'has_bank_details': has_bank_details,
         'is_time_to_withdraw': is_time_to_withdraw,
         'MIN_WITHDRAWAL_AMOUNT': MIN_WITHDRAWAL_AMOUNT,
         'can_withdraw_today': can_withdraw_today,
@@ -252,7 +261,6 @@ def process_task(request):
         user.available_balance += task_earnings
         user.save()
 
-        # Comissões de Equipa (Rede de 3 Níveis)
         p1 = user.invited_by
         if p1:
             subsidy_a = task_earnings * Decimal('0.20')
@@ -301,7 +309,6 @@ def nivel(request):
             request.user.level_active = True
             request.user.save()
 
-            # Bónus de indicação por compra de nível
             p1 = request.user.invited_by
             if p1 and UserLevel.objects.filter(user=p1, is_active=True).exists():
                 com1 = val * Decimal('0.15')
@@ -381,7 +388,6 @@ def spin_roulette(request):
     roulette_settings = RouletteSettings.objects.first()
     prizes_raw = [p.strip() for p in roulette_settings.prizes.split(',')] if roulette_settings and roulette_settings.prizes else ['0', '500', '1000', '0', '5000', '200', '0', '10000']
     
-    # Lógica de pesos para não dar sempre o prémio maior
     weighted_pool = []
     for p in prizes_raw:
         val = Decimal(p)

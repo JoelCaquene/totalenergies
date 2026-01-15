@@ -14,16 +14,14 @@ class CustomUserAdmin(admin.ModelAdmin):
     list_filter = ('is_staff', 'is_active', 'level_active')
     ordering = ('-date_joined',)
 
-# --- CONFIGURAÇÕES DE DEPÓSITO (ATUALIZADO) ---
+# --- CONFIGURAÇÕES DE DEPÓSITO ---
 
 @admin.register(Deposit)
 class DepositAdmin(admin.ModelAdmin):
-    # Adicionado 'payment_method' e 'payer_name' na visualização principal
     list_display = ('user', 'amount', 'payment_method', 'payer_name', 'is_approved', 'created_at', 'proof_link') 
     search_fields = ('user__phone_number', 'payer_name')
     list_filter = ('is_approved', 'payment_method', 'created_at')
     
-    # Organização dos campos dentro da página de aprovação
     readonly_fields = ('current_proof_display', 'created_at')
     fieldsets = (
         ('Informações do Usuário', {
@@ -37,14 +35,12 @@ class DepositAdmin(admin.ModelAdmin):
         }),
     )
 
-    # Função para o link rápido na lista
     def proof_link(self, obj):
         if obj.proof_of_payment:
             return mark_safe(f'<a href="{obj.proof_of_payment.url}" target="_blank" style="color: #2e7d32; font-weight: bold;">Ver Imagem</a>')
         return "Nenhum"
     proof_link.short_description = 'Comprovativo'
 
-    # Função para mostrar a foto grande no detalhe do depósito
     def current_proof_display(self, obj):
         if obj.proof_of_payment:
             return mark_safe(f'''
@@ -56,14 +52,30 @@ class DepositAdmin(admin.ModelAdmin):
         return "Nenhum Comprovativo Carregado"
     current_proof_display.short_description = 'Foto do Comprovativo'
 
-# --- CONFIGURAÇÕES DE SAQUE ---
+# --- CONFIGURAÇÕES DE SAQUE (ATUALIZADO COM MÉTODO E DETALHES) ---
 
 @admin.register(Withdrawal)
 class WithdrawalAdmin(admin.ModelAdmin):
-    list_display = ('user', 'amount', 'status', 'created_at')
-    search_fields = ('user__phone_number',)
-    list_filter = ('status', 'created_at')
-    list_editable = ('status',) # Permite mudar o status direto na lista
+    # Mostra o método e detalhes na lista principal
+    list_display = ('user', 'amount', 'method', 'status', 'created_at')
+    search_fields = ('user__phone_number', 'withdrawal_details')
+    list_filter = ('status', 'method', 'created_at')
+    list_editable = ('status',)
+    
+    # Organiza os campos para facilitar o pagamento por parte do admin
+    fieldsets = (
+        ('Informações de Solicitação', {
+            'fields': ('user', 'amount', 'status')
+        }),
+        ('Dados para Pagamento', {
+            'fields': ('method', 'withdrawal_details'),
+            'description': 'Estes são os dados fornecidos pelo cliente para o recebimento.'
+        }),
+        ('Datas', {
+            'fields': ('created_at',),
+        }),
+    )
+    readonly_fields = ('created_at',)
 
 # --- NÍVEIS E PLATAFORMA ---
 
