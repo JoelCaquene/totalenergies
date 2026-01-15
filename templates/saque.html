@@ -85,7 +85,7 @@
                 </div>
 
                 <div class="amount-display-box">
-                    <label>Valor Selecionado</label>
+                    <label style="color: #666; font-weight: 700; font-size: 0.85rem;">Valor Selecionado</label>
                     <div class="input-wrapper-premium">
                         <span class="currency-prefix">KZ</span>
                         <input type="number" name="amount" id="id_amount" readonly required placeholder="0">
@@ -134,8 +134,8 @@
     .mc-balance { font-size: 1.8rem; font-weight: 700; margin-top: 10px; }
     .mc-footer { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.9; }
 
-    /* Métodos de Pagamento */
-    .section-label { font-size: 0.85rem; font-weight: 700; color: #666; display: block; margin-bottom: 12px; text-align: center; }
+    /* Métodos de Pagamento - CORRIGIDO PARA PRETO */
+    .section-label { font-size: 0.85rem; font-weight: 700; color: #333; display: block; margin-bottom: 12px; text-align: center; }
     .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
     .method-option { cursor: pointer; }
     .method-option input { display: none; }
@@ -143,16 +143,18 @@
         background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; padding: 12px 5px;
         display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.3s;
     }
-    .method-box i { font-size: 1.2rem; color: #444; }
-    .method-box span { font-size: 0.7rem; font-weight: 700; }
+    .method-box i { font-size: 1.2rem; color: #333; } /* Ícone mais escuro */
+    .method-box span { font-size: 0.75rem; font-weight: 800; color: #1a1a1a !important; } /* Texto Preto */
+    
     .method-option input:checked + .method-box { background: #eef6ff; border-color: #0066cc; transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,102,204,0.1); }
     .method-option input:checked + .method-box i { color: #0066cc; }
+    .method-option input:checked + .method-box span { color: #0066cc !important; }
 
     /* Campos Dinâmicos */
     .fields-card { background: #fdfdfd; border: 1px dashed #ccd6e0; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
     .premium-input {
         width: 100%; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px;
-        padding: 12px; font-size: 0.9rem; margin-bottom: 10px; outline: none; transition: 0.3s;
+        padding: 12px; font-size: 0.9rem; margin-bottom: 10px; outline: none; transition: 0.3s; color: #333;
     }
     .premium-input:focus { border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0,102,204,0.05); }
 
@@ -163,7 +165,7 @@
     .input-wrapper-premium input { border: none; background: transparent; font-size: 1.8rem; font-weight: 700; color: #1a1a1a; width: 100%; outline: none; text-align: center; }
 
     .quick-values-pill-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 25px; }
-    .pill-btn { background: #f2f4f7; border: 1px solid #eef0f2; padding: 10px 2px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .pill-btn { background: #f2f4f7; border: 1px solid #eef0f2; padding: 10px 2px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; cursor: pointer; color: #333; }
     .pill-btn:active { background: #0066cc; color: white; }
 
     .btn-confirm-premium {
@@ -177,14 +179,11 @@
 <script>
     function toggleFields(method) {
         document.getElementById('fields-container').style.display = 'block';
-        // Esconder todos os grupos primeiro
         document.querySelectorAll('.method-fields').forEach(el => {
             el.style.display = 'none';
-            // Remover 'required' dos inputs escondidos para não travar o envio
             el.querySelectorAll('input').forEach(input => input.required = false);
         });
 
-        // Mostrar o selecionado e adicionar 'required'
         const activeGroup = document.getElementById('field-' + method);
         activeGroup.style.display = 'block';
         activeGroup.querySelectorAll('input').forEach(input => input.required = true);
